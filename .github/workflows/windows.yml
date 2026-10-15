@@ -1,8 +1,10 @@
-name: Build Windows executable
+name: Build and publish Windows executable
 on:
   workflow_dispatch:
   push:
     branches: [main]
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: windows-latest
@@ -17,3 +19,10 @@ jobs:
         with:
           name: WorkScout-Windows
           path: dist/WorkScout.exe
+      - name: Publish public release
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          gh release create v0.1.0 dist/WorkScout.exe --title "Work Scout v0.1.0" --notes "First Windows preview. Read-only local file inventory. Reports remain on the device." --target "${{ github.sha }}"
